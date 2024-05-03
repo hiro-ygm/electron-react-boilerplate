@@ -9,6 +9,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
+import Store from 'electron-store';
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
@@ -29,6 +30,15 @@ ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
   console.log(msgTemplate(arg));
   event.reply('ipc-example', msgTemplate('pong'));
+});
+const storeData = new Store();
+
+ipcMain.handle('storeTodoList', async (event, data) => {
+  storeData.set('todoList', data);
+});
+
+ipcMain.handle('loadTodoList', async () => {
+  return storeData.get('todoList');
 });
 
 if (process.env.NODE_ENV === 'production') {

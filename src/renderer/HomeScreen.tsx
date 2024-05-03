@@ -3,19 +3,54 @@ import TodoItem from './Todo';
 import { Todo } from './interface';
 import './App.css';
 
+interface ElectronWindow extends Window {
+  db: {
+    loadTodoList: () => Promise<Array<Todo> | null>;
+    storeTodoList: (todoList: Array<Todo>) => Promise<void>;
+  };
+}
+declare const window: ElectronWindow;
+
 function HomeScreen() {
   const [text, setText] = React.useState('');
   const [todos, setTodos] = React.useState<Array<Todo>>([]);
+  // データ操作
+  // ToDoリストを読み込み
+  const loadTodoList = async (): Promise<Array<Todo> | null> => {
+    const todoList = await window.db.loadTodoList();
+    return todoList;
+  };
+
+  // ToDoリストを保存
+  const storeTodoList = async (todoList: Array<Todo>): Promise<void> => {
+    await window.db.storeTodoList(todoList);
+  };
+
   useEffect(() => {
-    const defaultTodos = [
-      { id: 1, text: 'Learn React', done: false },
-      { id: 2, text: 'Learn TypeScript', done: false },
-    ];
-    setTodos(defaultTodos);
+    // eslint-disable-next-line no-console
+    console.log('load todo list');
+    loadTodoList()
+      .then((todoList) => {
+        if (todoList) {
+          setTodos(todoList);
+        }
+        return [];
+      })
+      .catch(() => {
+        return [];
+      });
   }, []);
 
   const handleAddTodo = () => {
-    setTodos([...todos, { id: todos.length + 1, text, done: false }]);
+    if (!text) {
+      return;
+    }
+    const newTodo: Array<Todo> = [
+      { id: new Date().getTime(), text, done: false },
+      ...todos,
+    ];
+    setTodos(newTodo);
+    storeTodoList(newTodo);
     setText('');
   };
 
@@ -27,6 +62,7 @@ function HomeScreen() {
       return todo;
     });
     setTodos(newTodos);
+    storeTodoList(newTodos);
   };
 
   return (
